@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>新榮永續 報工系統</title>
+    <style>
+:root{--primary:#2d5a27;--primary-light:#4a8a42;--primary-dark:#1e3d1a;--accent:#f5a623;--success:#27ae60;--bg:#f5f5f0;--card:#fff;--text:#333;--text-light:#666;--border:#e0e0e0;--shadow:0 2px 8px rgba(0,0,0,0.1)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.app{max-width:500px;margin:0 auto;min-height:100vh;background:var(--bg)}
+.page{display:none;min-height:100vh;padding-bottom:20px}.page.active{display:block}
+.header{background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);color:#fff;padding:40px 20px;text-align:center}
+.header.compact{padding:15px 20px;display:flex;align-items:center;gap:15px}
+.header.compact h2{flex:1;text-align:center;margin-right:40px}
+.logo{font-size:48px;margin-bottom:10px}
+.header h1{font-size:28px;font-weight:700;margin-bottom:5px}
+.subtitle{font-size:16px;opacity:0.9}
+.back-btn{background:rgba(255,255,255,0.2);border:none;color:#fff;padding:8px 12px;border-radius:8px;font-size:14px;cursor:pointer}
+.main-menu{padding:30px 20px;display:flex;flex-direction:column;gap:15px}
+.menu-btn{background:var(--card);border:none;border-radius:16px;padding:25px 20px;display:flex;align-items:center;gap:20px;box-shadow:var(--shadow);cursor:pointer}
+.menu-btn:disabled{opacity:0.4;cursor:not-allowed}
+.menu-btn .icon{font-size:36px}.menu-btn .label{font-size:20px;font-weight:600;color:var(--text)}
+.report-form,.login-form{padding:20px}
+.form-group{margin-bottom:20px}
+.form-group label{display:block;font-size:14px;font-weight:600;color:var(--text-light);margin-bottom:8px}
+.form-group select,.form-group input[type="text"],.form-group input[type="password"],.form-group input[type="date"]{width:100%;padding:15px;font-size:16px;border:2px solid var(--border);border-radius:12px;background:var(--card)}
+.form-group input:focus{border-color:var(--primary);outline:none}
+.quantity-input{display:flex;align-items:center;gap:10px;background:var(--card);padding:10px;border-radius:12px;border:2px solid var(--border)}
+.quantity-input input{flex:1;text-align:center;font-size:32px;font-weight:700;border:none;background:none;width:80px}
+.qty-btn{background:var(--primary);color:#fff;border:none;width:50px;height:50px;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer}
+.unit{display:block;text-align:center;margin-top:8px;color:var(--text-light);font-size:14px}
+.submit-btn,.login-btn{width:100%;padding:18px;font-size:18px;font-weight:700;background:linear-gradient(135deg,var(--success) 0%,#219a52 100%);color:#fff;border:none;border-radius:12px;cursor:pointer;margin-top:20px}
+.scan-btn{width:100%;padding:18px;font-size:18px;font-weight:700;background:linear-gradient(135deg,var(--accent) 0%,#e09000 100%);color:#fff;border:none;border-radius:12px;cursor:pointer;margin-bottom:15px;display:flex;align-items:center;justify-content:center;gap:10px}
+.dashboard{padding:20px}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:25px}
+.stat-card{background:var(--card);padding:20px 10px;border-radius:12px;text-align:center;box-shadow:var(--shadow)}
+.stat-value{display:block;font-size:32px;font-weight:700;color:var(--primary)}
+.stat-label{display:block;font-size:12px;color:var(--text-light);margin-top:5px}
+.section-title{font-size:16px;font-weight:600;color:var(--text-light);margin-bottom:15px}
+.machine-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:25px}
+.machine-card{background:var(--card);padding:15px;border-radius:12px;box-shadow:var(--shadow)}
+.machine-card .machine-name{font-size:14px;font-weight:600;margin-bottom:8px}
+.machine-card .progress-bar{height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:5px}
+.machine-card .progress-fill{height:100%;background:linear-gradient(90deg,var(--primary-light),var(--primary));border-radius:4px}
+.machine-card .machine-count{font-size:12px;color:var(--text-light)}
+.timeline{background:var(--card);border-radius:12px;padding:15px;box-shadow:var(--shadow);max-height:300px;overflow-y:auto}
+.timeline-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.timeline-item:last-child{border-bottom:none}
+.timeline-time{font-size:12px;color:var(--text-light);min-width:50px}
+.timeline-content{flex:1}
+.timeline-machine{font-weight:600;font-size:14px}
+.timeline-detail{font-size:12px;color:var(--text-light)}
+.timeline-worker{font-size:11px;color:var(--primary);margin-top:2px}
+.history{padding:20px}
+.history-item{background:var(--card);padding:15px;border-radius:12px;margin-bottom:10px;box-shadow:var(--shadow)}
+.history-item .history-header{display:flex;justify-content:space-between;margin-bottom:8px}
+.history-item .history-machine{font-weight:600}
+.history-item .history-time{font-size:12px;color:var(--text-light)}
+.history-item .history-detail{font-size:14px;color:var(--text-light)}
+.history-item .history-worker{font-size:12px;color:var(--primary);margin-top:5px}
+.export-btn,.filter-btn{width:100%;padding:15px;font-size:16px;font-weight:600;background:var(--card);color:var(--primary);border:2px solid var(--primary);border-radius:12px;cursor:pointer;margin-bottom:10px}
+.export-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:15px}
+.filter-section{background:var(--card);padding:15px;border-radius:12px;margin-bottom:15px;box-shadow:var(--shadow)}
+.filter-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.filter-row input,.filter-row select{padding:12px;font-size:14px}
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--success);color:#fff;padding:15px 30px;border-radius:30px;font-weight:600;opacity:0;transition:transform 0.3s,opacity 0.3s;z-index:1000}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.footer{text-align:center;padding:20px;color:var(--text-light);font-size:12px}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text-light)}
+.empty-state .empty-icon{font-size:48px;margin-bottom:10px}
+.user-info{background:rgba(255,255,255,0.15);padding:10px 15px;border-radius:10px;margin-top:15px;font-size:14px}
+.logout-btn{background:rgba(255,255,255,0.2);border:none;color:#fff;padding:5px 10px;border-radius:5px;font-size:12px;margin-left:10px;cursor:pointer}
+.coworker-grid{display:flex;flex-wrap:wrap;gap:8px}
+.coworker-chip{display:flex;align-items:center;gap:6px;background:var(--card);padding:10px 14px;border-radius:20px;border:2px solid var(--border);cursor:pointer;font-size:14px;transition:all 0.2s}
+.coworker-chip.selected{border-color:var(--primary);background:rgba(45,90,39,0.15);color:var(--primary);font-weight:600}
+.coworker-chip:active{transform:scale(0.95)}
+.login-preview{background:rgba(45,90,39,0.1);padding:15px;border-radius:12px;margin-bottom:15px;text-align:center;display:none}
+.login-preview.show{display:block}
+.login-preview .name{font-size:20px;font-weight:700;color:var(--primary)}
+.login-preview .role{font-size:12px;color:var(--text-light);margin-top:5px}
+.login-error{color:#c62828;font-size:13px;margin-top:8px;display:none}
+.login-error.show{display:block}
+.user-list{padding:20px}
+.user-item{background:var(--card);padding:15px;border-radius:12px;margin-bottom:10px;box-shadow:var(--shadow);display:flex;justify-content:space-between;align-items:center}
+.user-item .user-left{display:flex;align-items:center;gap:12px}
+.user-item .user-id{font-size:12px;color:var(--text-light);background:var(--bg);padding:4px 8px;border-radius:6px}
+.user-item .user-name{font-weight:600}
+.user-item .user-role{font-size:11px;padding:3px 8px;border-radius:10px;margin-left:8px}
+.user-item .user-role.admin{background:#e3f2fd;color:#1976d2}
+.user-item .user-role.manager{background:#fff3e0;color:#f57c00}
+.user-item .user-role.worker{background:#e8f5e9;color:#388e3c}
+.user-item .user-actions{display:flex;gap:8px}
+.user-item .user-actions button{padding:8px 12px;border:none;border-radius:8px;font-size:12px;cursor:pointer}
+.user-item .btn-edit{background:#e3f2fd;color:#1976d2}
+.user-item .btn-delete{background:#ffebee;color:#c62828}
+.add-user-btn{width:100%;padding:15px;font-size:16px;font-weight:600;background:var(--primary);color:#fff;border:none;border-radius:12px;cursor:pointer;margin-bottom:20px}
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px;display:none}
+.modal-overlay.show{display:flex}
+.modal{background:var(--card);border-radius:16px;padding:25px;width:100%;max-width:400px}
+.modal h3{font-size:18px;margin-bottom:20px;color:var(--primary)}
+.modal .form-group select{width:100%}
+.modal-actions{display:flex;gap:10px;margin-top:20px}
+.modal-actions button{flex:1;padding:15px;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer}
+.modal-actions .btn-cancel{background:var(--bg);color:var(--text)}
+.modal-actions .btn-save{background:var(--primary);color:#fff}
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- 登入頁面 -->
+        <div id="login-page" class="page active">
+            <header class="header">
+                <div class="logo">🪵</div>
+                <h1>新榮永續</h1>
+                <p class="subtitle">報工系統</p>
+            </header>
+            <main class="login-form">
+                <div class="form-group">
+                    <label>工號</label>
+                    <input type="text" id="login-id" placeholder="請輸入工號（如 P02）" autocomplete="off">
+                    <p id="login-error" class="login-error">工號不存在，請重新輸入</p>
+                </div>
+                <div id="login-preview" class="login-preview">
+                    <div class="name" id="preview-name"></div>
+                    <div class="role" id="preview-role"></div>
+                </div>
+                <button class="login-btn" onclick="doLogin()">登入</button>
+            </main>
+            <footer class="footer"><p>Prototype v0.7</p></footer>
+        </div>
+
+        <!-- 首頁 -->
+        <div id="home-page" class="page">
+            <header class="header">
+                <div class="logo">🪵</div>
+                <h1>新榮永續</h1>
+                <p class="subtitle">報工系統</p>
+                <div class="user-info">
+                    👤 <span id="current-user-name">-</span>
+                    <button class="logout-btn" onclick="doLogout()">登出</button>
+                </div>
+            </header>
+            <main class="main-menu">
+                <button class="menu-btn" onclick="showPage('report-page')"><span class="icon">📝</span><span class="label">報工</span></button>
+                <button class="menu-btn" id="menu-dashboard" onclick="showPage('dashboard-page')"><span class="icon">📊</span><span class="label">戰情看板</span></button>
+                <button class="menu-btn" id="menu-history" onclick="showPage('history-page')"><span class="icon">📋</span><span class="label">報工紀錄</span></button>
+                <button class="menu-btn" id="menu-users" onclick="showPage('users-page')"><span class="icon">👥</span><span class="label">使用者管理</span></button>
+            </main>
+        </div>
+
+        <!-- 報工頁面 -->
+        <div id="report-page" class="page">
+            <header class="header compact">
+                <button class="back-btn" onclick="showPage('home-page')">← 返回</button>
+                <h2>報工</h2>
+            </header>
+            <main class="report-form">
+                <button class="scan-btn" onclick="scanQRCode()">📷 掃描機台 QR Code</button>
+                <div class="form-group">
+                    <label>機台</label>
+                    <select id="machine-select">
+                        <option value="">選擇機台</option>
+                        <optgroup label="剪台"><option value="M101">M101 - 大剪台(上下剪)</option><option value="M102">M102 - 大剪台(甩剪)</option><option value="M103">M103 - 小剪台</option></optgroup>
+                        <optgroup label="多片機"><option value="M201">M201 - 多片機(大)</option><option value="M202">M202 - 多片機(小)</option></optgroup>
+                        <optgroup label="凹槽機/斜角"><option value="M301">M301 - 凹槽機(大)</option><option value="M302">M302 - 凹槽機(小)</option><option value="M303">M303 - 斜角</option></optgroup>
+                        <optgroup label="合板機"><option value="M401">M401 - 合板機</option></optgroup>
+                        <optgroup label="棧板"><option value="M501">M501 - 棧板</option><option value="M502">M502 - 棧板</option><option value="M503">M503 - 棧板</option><option value="M504">M504 - 棧板</option></optgroup>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>工作類型</label>
+                    <select id="work-type"><option value="">請先選擇機台</option></select>
+                </div>
+                <div class="form-group">
+                    <label>數量</label>
+                    <div class="quantity-input">
+                        <button class="qty-btn" onclick="adjustQty(-10)">-10</button>
+                        <button class="qty-btn" onclick="adjustQty(-1)">-1</button>
+                        <input type="number" id="quantity" value="0" min="0">
+                        <button class="qty-btn" onclick="adjustQty(1)">+1</button>
+                        <button class="qty-btn" onclick="adjustQty(10)">+10</button>
+                    </div>
+                    <span class="unit" id="unit-label">-</span>
+                </div>
+                <div class="form-group">
+                    <label>共同作業者（點選姓名）</label>
+                    <div class="coworker-grid" id="coworker-list"></div>
+                </div>
+                <div class="form-group">
+                    <label>備註（選填）</label>
+                    <input type="text" id="note" placeholder="例：有 2 個瑕疵品">
+                </div>
+                <button class="submit-btn" onclick="submitReport()">✓ 提交報工</button>
+            </main>
+        </div>
+
+        <!-- 戰情看板 -->
+        <div id="dashboard-page" class="page">
+            <header class="header compact">
+                <button class="back-btn" onclick="showPage('home-page')">← 返回</button>
+                <h2>戰情看板</h2>
+            </header>
+            <main class="dashboard">
+                <div class="stats-row">
+                    <div class="stat-card"><span class="stat-value" id="total-reports">0</span><span class="stat-label">總報工次數</span></div>
+                    <div class="stat-card"><span class="stat-value" id="total-pallet">0</span><span class="stat-label">棧板(片)</span></div>
+                    <div class="stat-card"><span class="stat-value" id="total-box">0</span><span class="stat-label">木箱(個)</span></div>
+                </div>
+                <h3 class="section-title">各機台進度</h3>
+                <div class="machine-grid" id="machine-grid"></div>
+                <h3 class="section-title">今日報工時間軸</h3>
+                <div class="timeline" id="timeline"></div>
+            </main>
+        </div>
+
+        <!-- 報工紀錄 -->
+        <div id="history-page" class="page">
+            <header class="header compact">
+                <button class="back-btn" onclick="showPage('home-page')">← 返回</button>
+                <h2>報工紀錄</h2>
+            </header>
+            <main class="history">
+                <div class="filter-section">
+                    <div class="filter-row">
+                        <input type="date" id="filter-date-start">
+                        <input type="date" id="filter-date-end">
+                    </div>
+                    <div class="filter-row">
+                        <select id="filter-machine"><option value="">全部機台</option></select>
+                        <select id="filter-worker"><option value="">全部員工</option></select>
+                    </div>
+                    <button class="filter-btn" onclick="applyFilter()">🔍 篩選</button>
+                </div>
+                <div class="export-row">
+                    <button class="export-btn" onclick="exportDaily()">📅 日報表</button>
+                    <button class="export-btn" onclick="exportMonthly()">📆 月報表</button>
+                </div>
+                <button class="export-btn" onclick="exportFiltered()">📥 匯出篩選結果</button>
+                <div class="history-list" id="history-list"></div>
+            </main>
+        </div>
+
+        <!-- 使用者管理 -->
+        <div id="users-page" class="page">
+            <header class="header compact">
+                <button class="back-btn" onclick="showPage('home-page')">← 返回</button>
+                <h2>使用者管理</h2>
+            </header>
+            <main class="user-list">
+                <button class="add-user-btn" onclick="showAddUserModal()">+ 新增使用者</button>
+                <div id="user-list-container"></div>
+            </main>
+        </div>
+
+        <div id="toast" class="toast"></div>
+    </div>
+
+    <!-- 新增/編輯使用者 Modal -->
+    <div id="user-modal" class="modal-overlay">
+        <div class="modal">
+            <h3 id="modal-title">新增使用者</h3>
+            <div class="form-group">
+                <label>工號</label>
+                <input type="text" id="modal-id" placeholder="如 P25">
+            </div>
+            <div class="form-group">
+                <label>姓名</label>
+                <input type="text" id="modal-name" placeholder="員工姓名">
+            </div>
+            <div class="form-group">
+                <label>權限</label>
+                <select id="modal-role">
+                    <option value="worker">一般員工</option>
+                    <option value="manager">主管</option>
+                    <option value="admin">管理者</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeUserModal()">取消</button>
+                <button class="btn-save" onclick="saveUser()">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+const STORAGE_KEY='xinrong_reports_v5';
+const USER_KEY='xinrong_user';
+const USERS_KEY='xinrong_users_v7b';
+
+// 預設員工名冊
+const defaultEmployees=[
+    {id:'H01',name:'吳界',role:'admin'},
+    {id:'P02',name:'王雅惠',role:'worker'},
+    {id:'P03',name:'葉世光',role:'worker'},
+    {id:'P04',name:'阮氏草',role:'worker'},
+    {id:'P06',name:'李群',role:'worker'},
+    {id:'P07',name:'羅國維',role:'worker'},
+    {id:'P08',name:'吳均婕',role:'worker'},
+    {id:'P10',name:'楊子威',role:'worker'},
+    {id:'P11',name:'陳智偉',role:'worker'},
+    {id:'P12',name:'陳曉東',role:'worker'},
+    {id:'P13',name:'林玉珠',role:'worker'},
+    {id:'P14',name:'陳欽勇',role:'worker'},
+    {id:'P17',name:'邱志祥',role:'worker'},
+    {id:'P21',name:'羅唯瑜',role:'worker'},
+    {id:'P23',name:'莊峻溢',role:'worker'},
+    {id:'P24',name:'潘曉傑',role:'worker'},
+    {id:'S01',name:'鐘議德',role:'worker'}
+];
+
+function getEmployees(){
+    const saved=localStorage.getItem(USERS_KEY);
+    if(saved)return JSON.parse(saved);
+    localStorage.setItem(USERS_KEY,JSON.stringify(defaultEmployees));
+    return defaultEmployees;
+}
+function saveEmployees(list){localStorage.setItem(USERS_KEY,JSON.stringify(list));}
+
+const machines=[
+    {id:'M101',name:'大剪台(上下剪)'},{id:'M102',name:'大剪台(甩剪)'},{id:'M103',name:'小剪台'},
+    {id:'M201',name:'多片機(大)'},{id:'M202',name:'多片機(小)'},
+    {id:'M301',name:'凹槽機(大)'},{id:'M302',name:'凹槽機(小)'},{id:'M303',name:'斜角'},
+    {id:'M401',name:'合板機'},
+    {id:'M501',name:'棧板'},{id:'M502',name:'棧板'},{id:'M503',name:'棧板'},{id:'M504',name:'棧板'}
+];
+
+const machineWorkTypes={
+    'M101':[{id:'log',name:'原木',unit:'件'},{id:'scrap',name:'餘料',unit:'隻'},{id:'board',name:'板材',unit:'片'}],
+    'M102':[{id:'log',name:'原木',unit:'件'},{id:'scrap',name:'餘料',unit:'隻'},{id:'board',name:'板材',unit:'片'}],
+    'M103':[{id:'log',name:'原木',unit:'件'},{id:'scrap',name:'餘料',unit:'隻'},{id:'board',name:'板材',unit:'片'}],
+    'M201':[{id:'plank',name:'板子',unit:'片'},{id:'strip',name:'木條',unit:'隻'},{id:'chip',name:'改木粒',unit:'隻'}],
+    'M202':[{id:'plank',name:'板子',unit:'片'},{id:'strip',name:'木條',unit:'隻'},{id:'chip',name:'改木粒',unit:'隻'}],
+    'M301':[{id:'groove',name:'凹槽',unit:'隻'},{id:'bevel',name:'斜角',unit:'隻'}],
+    'M302':[{id:'groove',name:'凹槽',unit:'隻'},{id:'bevel',name:'斜角',unit:'隻'}],
+    'M303':[{id:'groove',name:'凹槽',unit:'隻'},{id:'bevel',name:'斜角',unit:'隻'}],
+    'M401':[{id:'panel',name:'面板',unit:'片'},{id:'slat',name:'條子',unit:'片'}],
+    'M501':[{id:'pallet',name:'棧板',unit:'片'},{id:'cover',name:'蓋板、面板',unit:'片'},{id:'box',name:'木箱',unit:'個'},{id:'combo',name:'組合',unit:'片'}],
+    'M502':[{id:'pallet',name:'棧板',unit:'片'},{id:'cover',name:'蓋板、面板',unit:'片'},{id:'box',name:'木箱',unit:'個'},{id:'combo',name:'組合',unit:'片'}],
+    'M503':[{id:'pallet',name:'棧板',unit:'片'},{id:'cover',name:'蓋板、面板',unit:'片'},{id:'box',name:'木箱',unit:'個'},{id:'combo',name:'組合',unit:'片'}],
+    'M504':[{id:'pallet',name:'棧板',unit:'片'},{id:'cover',name:'蓋板、面板',unit:'片'},{id:'box',name:'木箱',unit:'個'},{id:'combo',name:'組合',unit:'片'}]
+};
+
+const roleLabels={admin:'管理者',manager:'主管',worker:'一般員工'};
+
+let currentUser=null;
+let filteredReports=[];
+let selectedCoworkers=new Set();
+let editingUserId=null;
+
+// 登入相關
+const loginInput=document.getElementById('login-id');
+loginInput.addEventListener('input',function(){
+    const id=this.value.toUpperCase().trim();
+    const employees=getEmployees();
+    const user=employees.find(e=>e.id===id);
+    const preview=document.getElementById('login-preview');
+    const error=document.getElementById('login-error');
+    
+    if(user){
+        document.getElementById('preview-name').textContent=user.name;
+        document.getElementById('preview-role').textContent=roleLabels[user.role]||'員工';
+        preview.classList.add('show');
+        error.classList.remove('show');
+    }else{
+        preview.classList.remove('show');
+    }
+});
+loginInput.addEventListener('keypress',function(e){if(e.key==='Enter')doLogin();});
+
+function doLogin(){
+    const id=document.getElementById('login-id').value.toUpperCase().trim();
+    const employees=getEmployees();
+    const user=employees.find(e=>e.id===id);
+    
+    if(!user){
+        document.getElementById('login-error').classList.add('show');
+        return;
+    }
+    
+    currentUser=user;
+    localStorage.setItem(USER_KEY,JSON.stringify(user));
+    document.getElementById('current-user-name').textContent=`${user.name}（${user.id}）`;
+    updateMenuVisibility();
+    showPage('home-page');
+    showToast(`歡迎，${user.name}！`);
+}
+
+function doLogout(){
+    currentUser=null;
+    localStorage.removeItem(USER_KEY);
+    document.getElementById('login-id').value='';
+    document.getElementById('login-preview').classList.remove('show');
+    document.getElementById('login-error').classList.remove('show');
+    showPage('login-page');
+}
+
+function checkLogin(){
+    const saved=localStorage.getItem(USER_KEY);
+    if(saved){
+        currentUser=JSON.parse(saved);
+        // 確認用戶還存在
+        const employees=getEmployees();
+        const stillExists=employees.find(e=>e.id===currentUser.id);
+        if(stillExists){
+            currentUser=stillExists; // 更新權限
+            document.getElementById('current-user-name').textContent=`${currentUser.name}（${currentUser.id}）`;
+            updateMenuVisibility();
+            return true;
+        }
+    }
+    return false;
+}
+
+function updateMenuVisibility(){
+    const canViewDashboard=currentUser.role==='admin'||currentUser.role==='manager';
+    const canManageUsers=currentUser.role==='admin';
+    
+    document.getElementById('menu-dashboard').disabled=!canViewDashboard;
+    document.getElementById('menu-dashboard').style.display=canViewDashboard?'':'none';
+    document.getElementById('menu-history').disabled=!canViewDashboard;
+    document.getElementById('menu-history').style.display=canViewDashboard?'':'none';
+    document.getElementById('menu-users').disabled=!canManageUsers;
+    document.getElementById('menu-users').style.display=canManageUsers?'':'none';
+}
+
+function updateCoworkerList(){
+    selectedCoworkers.clear();
+    const employees=getEmployees();
+    const list=document.getElementById('coworker-list');
+    list.innerHTML=employees.filter(e=>e.id!==currentUser?.id)
+        .map(e=>`<div class="coworker-chip" data-id="${e.id}" onclick="toggleCoworker(this)">${e.name}</div>`).join('');
+}
+
+function toggleCoworker(el){
+    const id=el.dataset.id;
+    if(selectedCoworkers.has(id)){
+        selectedCoworkers.delete(id);
+        el.classList.remove('selected');
+    }else{
+        selectedCoworkers.add(id);
+        el.classList.add('selected');
+    }
+}
+
+function showPage(id){
+    if(id!=='login-page' && !currentUser){if(!checkLogin()){showPage('login-page');return;}}
+    
+    // 權限檢查
+    if(id==='dashboard-page'||id==='history-page'){
+        if(currentUser.role!=='admin'&&currentUser.role!=='manager'){
+            showToast('您沒有權限查看此頁面');return;
+        }
+    }
+    if(id==='users-page'){
+        if(currentUser.role!=='admin'){
+            showToast('您沒有權限查看此頁面');return;
+        }
+    }
+    
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    if(id==='dashboard-page')updateDashboard();
+    else if(id==='history-page'){updateFilterSelects();updateHistory();}
+    else if(id==='report-page')updateCoworkerList();
+    else if(id==='users-page')renderUserList();
+}
+
+function updateFilterSelects(){
+    const employees=getEmployees();
+    document.getElementById('filter-machine').innerHTML='<option value="">全部機台</option>'+machines.map(m=>`<option value="${m.id}">${m.id}</option>`).join('');
+    document.getElementById('filter-worker').innerHTML='<option value="">全部員工</option>'+employees.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
+}
+
+function adjustQty(d){const i=document.getElementById('quantity');i.value=Math.max(0,(parseInt(i.value)||0)+d);}
+
+function scanQRCode(){
+    const code=prompt('請輸入機台代號（例如 M101）\n\n實際使用時會開啟相機掃描');
+    if(code){
+        const machineId=code.toUpperCase().trim();
+        const sel=document.getElementById('machine-select');
+        if([...sel.options].some(o=>o.value===machineId)){
+            sel.value=machineId;sel.dispatchEvent(new Event('change'));
+            showToast(`已選擇 ${machineId}`);
+        }else{showToast('無效的機台代號');}
+    }
+}
+
+document.getElementById('machine-select')?.addEventListener('change',function(){
+    const mid=this.value;
+    const wsel=document.getElementById('work-type');
+    const ul=document.getElementById('unit-label');
+    wsel.innerHTML='';ul.textContent='-';
+    if(!mid){wsel.innerHTML='<option value="">請先選擇機台</option>';return;}
+    const types=machineWorkTypes[mid]||[];
+    wsel.innerHTML='<option value="">選擇工作類型</option>'+types.map(t=>`<option value="${t.id}" data-unit="${t.unit}">${t.name}（${t.unit}）</option>`).join('');
+});
+
+document.getElementById('work-type')?.addEventListener('change',function(){
+    const opt=this.options[this.selectedIndex];
+    document.getElementById('unit-label').textContent=opt?.dataset?.unit||'-';
+});
+
+function submitReport(){
+    if(!currentUser){showToast('請先登入');return;}
+    const m=document.getElementById('machine-select').value;
+    const wsel=document.getElementById('work-type');
+    const w=wsel.value;
+    const q=parseInt(document.getElementById('quantity').value)||0;
+    const n=document.getElementById('note').value;
+    if(!m){showToast('請選擇機台');return;}
+    if(!w){showToast('請選擇工作類型');return;}
+    if(q<=0){showToast('請輸入數量');return;}
+    
+    const opt=wsel.options[wsel.selectedIndex];
+    const unit=opt?.dataset?.unit||'';
+    const workName=opt?.textContent?.split('（')[0]||w;
+    
+    const employees=getEmployees();
+    const coworkers=[...selectedCoworkers].map(id=>employees.find(e=>e.id===id)?.name).filter(Boolean);
+    
+    const r={
+        id:Date.now(),
+        machine:m,
+        machineName:machines.find(x=>x.id===m)?.name||m,
+        workType:w,
+        workTypeName:workName,
+        quantity:q,
+        unit:unit,
+        note:n,
+        worker:currentUser.name,
+        workerId:currentUser.id,
+        coworkers:coworkers,
+        timestamp:new Date().toISOString()
+    };
+    
+    saveReport(r);
+    document.getElementById('machine-select').value='';
+    document.getElementById('work-type').innerHTML='<option value="">請先選擇機台</option>';
+    document.getElementById('quantity').value='0';
+    document.getElementById('note').value='';
+    document.getElementById('unit-label').textContent='-';
+    selectedCoworkers.clear();
+    document.querySelectorAll('.coworker-chip').forEach(el=>el.classList.remove('selected'));
+    showToast('報工成功！✓');
+    if(navigator.vibrate)navigator.vibrate(100);
+}
+
+function saveReport(r){const rs=getReports();rs.unshift(r);localStorage.setItem(STORAGE_KEY,JSON.stringify(rs));}
+function getReports(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||[];}catch{return[];}}
+function getTodayReports(){const t=new Date().toISOString().split('T')[0];return getReports().filter(r=>r.timestamp.startsWith(t));}
+
+function updateDashboard(){
+    const rs=getTodayReports();
+    document.getElementById('total-reports').textContent=rs.length;
+    let tp=0,tb=0;rs.forEach(r=>{if(r.workType==='pallet')tp+=r.quantity;if(r.workType==='box')tb+=r.quantity;});
+    document.getElementById('total-pallet').textContent=tp;
+    document.getElementById('total-box').textContent=tb;
+    
+    const mg=document.getElementById('machine-grid');mg.innerHTML='';
+    machines.forEach(m=>{
+        const mr=rs.filter(r=>r.machine===m.id);
+        const tot=mr.reduce((s,r)=>s+r.quantity,0);
+        const pct=Math.min(100,Math.round((tot/50)*100));
+        mg.innerHTML+=`<div class="machine-card"><div class="machine-name">${m.id} ${m.name}</div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div><div class="machine-count">${mr.length} 次報工</div></div>`;
+    });
+    
+    const tl=document.getElementById('timeline');
+    if(rs.length===0){tl.innerHTML='<div class="empty-state"><div class="empty-icon">📭</div><p>今日尚無報工紀錄</p></div>';}
+    else{tl.innerHTML=rs.slice(0,20).map(r=>{
+        const t=new Date(r.timestamp),ts=t.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
+        const workers=[r.worker,...(r.coworkers||[])].filter(Boolean).join('、');
+        return`<div class="timeline-item"><div class="timeline-time">${ts}</div><div class="timeline-content"><div class="timeline-machine">${r.machine} ${r.machineName}</div><div class="timeline-detail">${r.workTypeName} ${r.quantity} ${r.unit}</div><div class="timeline-worker">👤 ${workers}</div></div></div>`;
+    }).join('');}
+}
+
+function applyFilter(){
+    const sd=document.getElementById('filter-date-start').value;
+    const ed=document.getElementById('filter-date-end').value;
+    const m=document.getElementById('filter-machine').value;
+    const w=document.getElementById('filter-worker').value;
+    const employees=getEmployees();
+    let rs=getReports();
+    if(sd)rs=rs.filter(r=>r.timestamp.split('T')[0]>=sd);
+    if(ed)rs=rs.filter(r=>r.timestamp.split('T')[0]<=ed);
+    if(m)rs=rs.filter(r=>r.machine===m);
+    if(w)rs=rs.filter(r=>r.workerId===w||(r.coworkers||[]).some(c=>employees.find(e=>e.name===c)?.id===w));
+    filteredReports=rs;renderHistory(rs);showToast(`找到 ${rs.length} 筆`);
+}
+
+function updateHistory(){filteredReports=getReports();renderHistory(filteredReports.slice(0,50));}
+
+function renderHistory(rs){
+    const hl=document.getElementById('history-list');
+    if(rs.length===0){hl.innerHTML='<div class="empty-state"><div class="empty-icon">📭</div><p>無符合條件的紀錄</p></div>';return;}
+    hl.innerHTML=rs.slice(0,50).map(r=>{
+        const t=new Date(r.timestamp),ds=t.toLocaleDateString('zh-TW'),ts=t.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
+        const workers=[r.worker,...(r.coworkers||[])].filter(Boolean).join('、');
+        return`<div class="history-item"><div class="history-header"><span class="history-machine">${r.machine} ${r.machineName}</span><span class="history-time">${ds} ${ts}</span></div><div class="history-detail">${r.workTypeName} ${r.quantity} ${r.unit}${r.note?' - '+r.note:''}</div><div class="history-worker">👤 ${workers}</div></div>`;
+    }).join('');
+}
+
+function exportFiltered(){exportCSV(filteredReports,'篩選結果');}
+function exportDaily(){const d=prompt('日期 (YYYY-MM-DD)',new Date().toISOString().split('T')[0]);if(d)exportCSV(getReports().filter(r=>r.timestamp.startsWith(d)),`日報表_${d}`);}
+function exportMonthly(){const m=prompt('月份 (YYYY-MM)',new Date().toISOString().slice(0,7));if(m)exportCSV(getReports().filter(r=>r.timestamp.startsWith(m)),`月報表_${m}`);}
+
+function exportCSV(rs,fn){
+    if(rs.length===0){showToast('沒有資料');return;}
+    const h=['時間','機台','機台名稱','工作類型','數量','單位','報工者','共同作業者','備註'];
+    const rows=rs.map(r=>[r.timestamp,r.machine,r.machineName,r.workTypeName,r.quantity,r.unit,r.worker,(r.coworkers||[]).join('/'),r.note||'']);
+    const csv=[h,...rows].map(row=>row.map(c=>`"${c}"`).join(',')).join('\n');
+    const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${fn}.csv`;a.click();
+    showToast('匯出成功！');
+}
+
+// 使用者管理
+function renderUserList(){
+    const employees=getEmployees();
+    const container=document.getElementById('user-list-container');
+    container.innerHTML=employees.map(e=>`
+        <div class="user-item">
+            <div class="user-left">
+                <span class="user-id">${e.id}</span>
+                <span class="user-name">${e.name}</span>
+                <span class="user-role ${e.role}">${roleLabels[e.role]}</span>
+            </div>
+            <div class="user-actions">
+                <button class="btn-edit" onclick="editUser('${e.id}')">編輯</button>
+                <button class="btn-delete" onclick="deleteUser('${e.id}')">刪除</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function showAddUserModal(){
+    editingUserId=null;
+    document.getElementById('modal-title').textContent='新增使用者';
+    document.getElementById('modal-id').value='';
+    document.getElementById('modal-id').disabled=false;
+    document.getElementById('modal-name').value='';
+    document.getElementById('modal-role').value='worker';
+    document.getElementById('user-modal').classList.add('show');
+}
+
+function editUser(id){
+    const employees=getEmployees();
+    const user=employees.find(e=>e.id===id);
+    if(!user)return;
+    
+    editingUserId=id;
+    document.getElementById('modal-title').textContent='編輯使用者';
+    document.getElementById('modal-id').value=user.id;
+    document.getElementById('modal-id').disabled=true;
+    document.getElementById('modal-name').value=user.name;
+    document.getElementById('modal-role').value=user.role;
+    document.getElementById('user-modal').classList.add('show');
+}
+
+function closeUserModal(){
+    document.getElementById('user-modal').classList.remove('show');
+}
+
+function saveUser(){
+    const id=document.getElementById('modal-id').value.toUpperCase().trim();
+    const name=document.getElementById('modal-name').value.trim();
+    const role=document.getElementById('modal-role').value;
+    
+    if(!id||!name){showToast('請填寫完整資料');return;}
+    
+    let employees=getEmployees();
+    
+    if(editingUserId){
+        const idx=employees.findIndex(e=>e.id===editingUserId);
+        if(idx!==-1){
+            employees[idx]={...employees[idx],name,role};
+        }
+    }else{
+        if(employees.find(e=>e.id===id)){
+            showToast('此工號已存在');return;
+        }
+        employees.push({id,name,role});
+    }
+    
+    saveEmployees(employees);
+    closeUserModal();
+    renderUserList();
+    showToast('儲存成功！');
+}
+
+function deleteUser(id){
+    if(id===currentUser.id){
+        showToast('無法刪除自己');return;
+    }
+    if(!confirm('確定要刪除此使用者？'))return;
+    
+    let employees=getEmployees();
+    employees=employees.filter(e=>e.id!==id);
+    saveEmployees(employees);
+    renderUserList();
+    showToast('已刪除');
+}
+
+function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);}
+
+document.addEventListener('DOMContentLoaded',()=>{if(checkLogin())showPage('home-page');});
+    </script>
+</body>
+</html>
