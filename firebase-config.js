@@ -1,12 +1,12 @@
 // Firebase Configuration
 // TODO: Replace with your actual Firebase project configuration
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyBT7GfpPD78JKb7nJmB8bvktrWENu0zLCg",
+    authDomain: "xr-report-f7787.firebaseapp.com",
+    projectId: "xr-report-f7787",
+    storageBucket: "xr-report-f7787.appspot.com",
+    messagingSenderId: "5511216419",
+    appId: "1:5511216419:web:79e3c126871bf977306096"
 };
 
 // Initialize Firebase

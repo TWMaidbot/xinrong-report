@@ -1,50 +1,25 @@
-# 新榮永續 報工系統
+# XinRong Report System (新榮永續報工系統)
 
-木材加工廠的生產報工系統 Prototype。
+A web-based production reporting system designed for XinRong Manufacturing.
 
-## 功能
+## Features
+- **Production Reporting**: QR-code based machine selection and reporting.
+- **Dashboard**: Real-time visualization of production stats by category (Pallet, Shear, etc.).
+- **Machine Management**: Admin tools to manage machines and generate QR codes.
+- **Responsive Design**: Optimized for tablets (operators) and desktops (admins).
 
-- 📝 **報工** - 選擇機台、工作類型、數量，快速報工
-- 📊 **戰情看板** - 即時查看今日產量統計
-- 📋 **報工紀錄** - 查詢歷史報工、匯出 CSV 報表
-- 👥 **使用者管理** - 新增/編輯/刪除員工、分配權限
+## Live Demo
+[https://TWMaidbot.github.io/xinrong-report/](https://TWMaidbot.github.io/xinrong-report/)
+*(Requires GitHub Pages to be enabled)*
 
-## 權限分級
+## Setup
+1. Clone the repository.
+2. Open `index.html` in a modern browser (Chrome/Edge recommended).
+3. No build steps required (Vanilla JS).
 
-| 角色 | 報工 | 戰情看板 | 報工紀錄 | 使用者管理 |
-|------|:----:|:--------:|:--------:|:----------:|
-| 一般員工 | ✅ | ❌ | ❌ | ❌ |
-| 主管 | ✅ | ✅ | ✅ | ❌ |
-| 管理者 | ✅ | ✅ | ✅ | ✅ |
+## Configuration
+- **Firebase**: Edit `firebase-config.js` to add your Firebase keys for cloud synchronization.
+- **Local Mode**: Works out-of-the-box using LocalStorage.
 
-## 機台配置（14 台）
-
-- **剪台** M101~M103
-- **多片機** M201~M202
-- **凹槽機/斜角** M301~M303
-- **合板機** M401
-- **棧板** M501~M504
-
-## 使用方式
-
-1. 開啟 `index.html`
-2. 輸入工號登入（如 H01）
-3. 開始報工！
-
-## 技術
-
-- 純 HTML/CSS/JavaScript
-- LocalStorage 本地儲存
-- 無需後端，可直接部署為靜態網站
-
-## 部署
-
-可部署至：
-- GitHub Pages
-- Vercel
-- Netlify
-- 任何靜態網站託管
-
----
-
-**新榮永續** © 2026
+## Version
+v0.8 (Pre-release)

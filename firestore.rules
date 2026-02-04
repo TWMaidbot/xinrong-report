@@ -1,0 +1,21 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 保護報工紀錄 collection (reports_v5)
+    // 1. 允許所有人讀取 (為了 TV 模式)
+    // 2. 允許新增/修改，但必須包含必要欄位 (worker, machine, quantity)
+    // 3. 禁止刪除 (防止惡意清空資料)
+    match /reports_v5/{reportId} {
+      allow read: if true;
+      allow create, update: if request.resource.data.keys().hasAll(['worker', 'machine', 'quantity'])
+                            && request.resource.data.quantity is number;
+      allow delete: if false; 
+    }
+
+    // 其他資料 (如 users, machines) 暫時維持開放，以免影響後台管理功能
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
