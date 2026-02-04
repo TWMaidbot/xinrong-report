@@ -26,10 +26,6 @@ A web-based production reporting system designed for XinRong Manufacturing.
 - **Data Protection**: Firestore security rules prevent unauthorized deletion of reports.
 - **Machine Management**: Admin interface to add/edit machines and generate QR codes.
 
-## Links
-- **Production URL**: [https://xr-report-f7787.web.app](https://xr-report-f7787.web.app)
-- **TV Mode**: [https://xr-report-f7787.web.app/?mode=tv](https://xr-report-f7787.web.app/?mode=tv)
-
 ## Setup
 1. Clone the repository.
 2. Install dependencies: `npm install -g firebase-tools`
