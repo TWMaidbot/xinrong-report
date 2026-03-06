@@ -496,22 +496,45 @@ if (workTypeSelect) {
 
 let isSubmitting = false; // 防呆旗標：防止連續點擊重複報工
 
-async function submitReport() {
-    // 防呆：點擊後立即鎖定，2 秒內不允許重複提交
-    if (isSubmitting) { showToast('請稍候，勿重複點擊'); return; }
-    isSubmitting = true; // 最先鎖定，比驗證還早
-    const submitBtn = document.querySelector('.submit-btn');
-    if (submitBtn) submitBtn.disabled = true;
+// 鎖定/解鎖提交按鈕的共用函數
+function lockSubmitBtn() {
+    const btn = document.querySelector('.submit-btn');
+    if (btn) {
+        btn.disabled = true;                    // HTML disabled 屬性
+        btn.classList.add('submitting');         // 加上 CSS 視覺效果
+        btn.style.pointerEvents = 'none';       // 徹底阻止點擊事件
+        btn.textContent = '⏳ 提交中...';       // 改按鈕文字
+    }
+}
 
-    if (!currentUser) { showToast('請先登入'); isSubmitting = false; if (submitBtn) submitBtn.disabled = false; return; }
+function unlockSubmitBtn() {
+    const btn = document.querySelector('.submit-btn');
+    if (btn) {
+        btn.disabled = false;
+        btn.classList.remove('submitting');
+        btn.style.pointerEvents = '';
+        btn.textContent = '✓ 提交報工';         // 還原按鈕文字
+    }
+}
+
+async function submitReport() {
+    // 防呆：點擊後立即鎖定，3 秒內不允許重複提交
+    if (isSubmitting) {
+        showToast('⚠️ 請稍候，勿重複點擊');
+        return;
+    }
+    isSubmitting = true;  // 最先鎖定，比驗證還早
+    lockSubmitBtn();      // 立即視覺鎖定
+
+    if (!currentUser) { showToast('請先登入'); isSubmitting = false; unlockSubmitBtn(); return; }
     const m = document.getElementById('machine-select').value;
     const wsel = document.getElementById('work-type');
     const w = wsel.value;
     const q = parseInt(document.getElementById('quantity').value) || 0;
     const n = document.getElementById('note').value;
-    if (!m) { showToast('請選擇機台'); isSubmitting = false; if (submitBtn) submitBtn.disabled = false; return; }
-    if (!w) { showToast('請選擇工作類型'); isSubmitting = false; if (submitBtn) submitBtn.disabled = false; return; }
-    if (q <= 0) { showToast('請輸入數量'); isSubmitting = false; if (submitBtn) submitBtn.disabled = false; return; }
+    if (!m) { showToast('請選擇機台'); isSubmitting = false; unlockSubmitBtn(); return; }
+    if (!w) { showToast('請選擇工作類型'); isSubmitting = false; unlockSubmitBtn(); return; }
+    if (q <= 0) { showToast('請輸入數量'); isSubmitting = false; unlockSubmitBtn(); return; }
 
     const opt = wsel.options[wsel.selectedIndex];
     const unit = opt?.dataset?.unit || '';
@@ -547,11 +570,11 @@ async function submitReport() {
     showToast('報工成功！✓');
     if (navigator.vibrate) navigator.vibrate(100);
 
-    // 2 秒後解鎖，才允許再次提交
+    // 3 秒後解鎖，才允許再次提交（視覺回饋讓使用者知道正在冷卻）
     setTimeout(() => {
         isSubmitting = false;
-        if (submitBtn) submitBtn.disabled = false;
-    }, 2000);
+        unlockSubmitBtn();
+    }, 3000);
 }
 
 async function saveReport(r) {
