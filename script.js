@@ -89,7 +89,7 @@ async function saveEmployees(list) {
 const MACHINES_KEY = 'xinrong_machines_v1';
 // Default machines as constant for initialization
 const defaultMachines = [
-    { id: 'M101', name: '大剪台(上下剪)', category: '剪台' }, { id: 'M102', name: '大剪台(甩剪)', category: '剪台' }, { id: 'M103', name: '小剪台', category: '剪台' },
+    { id: 'M101', name: '大剪台(上下剪)', category: '大剪台' }, { id: 'M102', name: '大剪台(甩剪)', category: '大剪台' }, { id: 'M103', name: '小剪台', category: '小剪台' },
     { id: 'M201', name: '多片機(大)', category: '多片機' }, { id: 'M202', name: '多片機(小)', category: '多片機' },
     { id: 'M301', name: '凹槽機(大)', category: '凹槽機/斜角' }, { id: 'M302', name: '凹槽機(小)', category: '凹槽機/斜角' }, { id: 'M303', name: '斜角', category: '凹槽機/斜角' },
     { id: 'M401', name: '合板機', category: '合板機' },
@@ -109,10 +109,25 @@ async function getMachines() {
         } catch (e) { console.error("DB Error", e); }
     }
     const saved = localStorage.getItem(MACHINES_KEY);
-    if (saved) return JSON.parse(saved);
+    if (saved) {
+        let list = JSON.parse(saved);
+        // [New] Migration: Fix old categories
+        let dirty = false;
+        list.forEach(m => {
+            if (m.category === '剪台') {
+                if (m.id === 'M103') m.category = '小剪台';
+                else m.category = '大剪台';
+                dirty = true;
+            }
+        });
+        if (dirty) localStorage.setItem(MACHINES_KEY, JSON.stringify(list));
+        return list;
+    }
     localStorage.setItem(MACHINES_KEY, JSON.stringify(defaultMachines));
     return defaultMachines;
 }
+
+
 
 async function saveMachine(machine) {
     if (db) {
@@ -139,11 +154,12 @@ async function deleteMachine(id) {
 }
 
 const categoryWorkTypes = {
-    '剪台': [{ id: 'log', name: '原木', unit: '件' }, { id: 'scrap', name: '餘料', unit: '隻' }, { id: 'board', name: '板材', unit: '片' }],
+    '大剪台': [{ id: 'log', name: '原木', unit: '件' }, { id: 'scrap', name: '餘料', unit: '隻' }, { id: 'board_strip', name: '板材、條子', unit: '片' }, { id: 'pellet', name: '木粒', unit: '顆' }],
+    '小剪台': [{ id: 'board_strip', name: '板材、條子', unit: '片' }, { id: 'pellet', name: '木粒', unit: '顆' }],
     '多片機': [{ id: 'plank', name: '板子', unit: '片' }, { id: 'strip', name: '木條', unit: '隻' }, { id: 'chip', name: '改木粒', unit: '隻' }],
     '凹槽機/斜角': [{ id: 'groove', name: '凹槽', unit: '隻' }, { id: 'bevel', name: '斜角', unit: '隻' }],
     '合板機': [{ id: 'panel', name: '面板', unit: '片' }, { id: 'slat', name: '條子', unit: '片' }],
-    '棧板': [{ id: 'pallet', name: '棧板', unit: '片' }, { id: 'cover', name: '蓋板、面板', unit: '片' }, { id: 'box', name: '木箱', unit: '個' }, { id: 'combo', name: '組合', unit: '片' }]
+    '棧板': [{ id: 'pallet_3legs', name: '木棧板(三隻腳)', unit: '片' }, { id: 'pallet_pellet', name: '木棧板(木粒)', unit: '片' }, { id: 'pallet_glue', name: '膠合棧板', unit: '片' }, { id: 'cover', name: '面板、蓋板', unit: '片' }, { id: 'combo_pallet', name: '組合', unit: '片' }, { id: 'box', name: '木箱', unit: '個' }, { id: 'l_angle', name: 'L 型角板', unit: '片' }]
 };
 
 async function getWorkTypesForMachine(machineId) {
@@ -293,7 +309,7 @@ async function updateCoworkerList() {
     selectedCoworkers.clear();
     const employees = await getEmployees();
     const list = document.getElementById('coworker-list');
-    list.innerHTML = employees.filter(e => e.id !== currentUser?.id)
+    list.innerHTML = employees.filter(e => e.id !== currentUser?.id && e.role !== 'admin' && e.role !== 'manager')
         .map(e => `<div class="coworker-chip" data-id="${e.id}" onclick="toggleCoworker(this)">${e.name}</div>`).join('');
 }
 
@@ -478,16 +494,24 @@ if (workTypeSelect) {
     });
 }
 
+let isSubmitting = false; // 防呆旗標：防止連續點擊重複報工
+
 async function submitReport() {
-    if (!currentUser) { showToast('請先登入'); return; }
+    // 防呆：點擊後立即鎖定，2 秒內不允許重複提交
+    if (isSubmitting) { showToast('請稍候，勿重複點擊'); return; }
+    isSubmitting = true; // 最先鎖定，比驗證還早
+    const submitBtn = document.querySelector('.submit-btn');
+    if (submitBtn) submitBtn.disabled = true;
+
+    if (!currentUser) { showToast('請先登入'); isSubmitting = false; if (submitBtn) submitBtn.disabled = false; return; }
     const m = document.getElementById('machine-select').value;
     const wsel = document.getElementById('work-type');
     const w = wsel.value;
     const q = parseInt(document.getElementById('quantity').value) || 0;
     const n = document.getElementById('note').value;
-    if (!m) { showToast('請選擇機台'); return; }
-    if (!w) { showToast('請選擇工作類型'); return; }
-    if (q <= 0) { showToast('請輸入數量'); return; }
+    if (!m) { showToast('請選擇機台'); isSubmitting = false; if (submitBtn) submitBtn.disabled = false; return; }
+    if (!w) { showToast('請選擇工作類型'); isSubmitting = false; if (submitBtn) submitBtn.disabled = false; return; }
+    if (q <= 0) { showToast('請輸入數量'); isSubmitting = false; if (submitBtn) submitBtn.disabled = false; return; }
 
     const opt = wsel.options[wsel.selectedIndex];
     const unit = opt?.dataset?.unit || '';
@@ -513,15 +537,21 @@ async function submitReport() {
     };
 
     saveReport(r);
-    document.getElementById('machine-select').value = '';
-    document.getElementById('work-type').innerHTML = '<option value="">請先選擇機台</option>';
-    document.getElementById('quantity').value = '0';
-    document.getElementById('note').value = '';
-    document.getElementById('unit-label').textContent = '-';
-    selectedCoworkers.clear();
-    document.querySelectorAll('.coworker-chip').forEach(el => el.classList.remove('selected'));
+    // document.getElementById('machine-select').value = ''; // Retain Machine
+    // document.getElementById('work-type').innerHTML = '<option value="">請先選擇機台</option>'; // Retain Work Type
+    document.getElementById('quantity').value = '0'; // field to reset
+    document.getElementById('note').value = '';     // field to reset
+    // document.getElementById('unit-label').textContent = '-'; // Retain Unit
+    // selectedCoworkers.clear(); // Retain Coworkers selection
+    // document.querySelectorAll('.coworker-chip').forEach(el => el.classList.remove('selected')); // Retain Coworkers UI
     showToast('報工成功！✓');
     if (navigator.vibrate) navigator.vibrate(100);
+
+    // 2 秒後解鎖，才允許再次提交
+    setTimeout(() => {
+        isSubmitting = false;
+        if (submitBtn) submitBtn.disabled = false;
+    }, 2000);
 }
 
 async function saveReport(r) {
@@ -558,9 +588,34 @@ async function getReports() {
 }
 
 async function getTodayReports() {
-    const t = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    // Use Taiwan Local Date string YYYY-MM-DD
+    const offset = now.getTimezoneOffset() * 60000; // in ms
+    const localTime = new Date(now.getTime() - offset);
+    // Actually simpler:
+    const t = now.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' })
+        .replace(/\//g, '-');
+    // Wait, toLocaleDateString might return 2026/02/05. 
+    // Let's stick to a robust manual format or just checks.
+    // robust: 
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+
     const rs = await getReports();
-    return rs.filter(r => r.timestamp.startsWith(t));
+    // Check if timestamp (ISO) falls on this local date
+    return rs.filter(r => {
+        const d = new Date(r.timestamp);
+        const dStr = d.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' })
+            .replace(/\//g, '-');
+        // Format usually YYYY/MM/DD or YYYY-MM-DD depending on locale impl.
+        // Safest:
+        const rYear = d.getFullYear();
+        const rMonth = String(d.getMonth() + 1).padStart(2, '0');
+        const rDay = String(d.getDate()).padStart(2, '0');
+        return `${rYear}-${rMonth}-${rDay}` === dateStr;
+    });
 }
 
 async function updateDashboard() {
@@ -571,12 +626,12 @@ async function updateDashboard() {
     const grid = document.getElementById('category-stats-grid');
     grid.innerHTML = '';
 
-    const categories = ['棧板', '剪台', '多片機', '凹槽機/斜角', '合板機'];
+    const categories = ['棧板', '大剪台', '小剪台', '多片機', '凹槽機/斜角', '合板機'];
 
     categories.forEach(cat => {
         const workTypes = categoryWorkTypes[cat];
         // Find all machines in this category
-        const catMachines = machines.filter(m => (m.category || '剪台') === cat).map(m => m.id);
+        const catMachines = machines.filter(m => (m.category || '大剪台') === cat).map(m => m.id);
 
         // Filter reports for these machines
         const catReports = rs.filter(r => catMachines.includes(r.machine));
@@ -585,23 +640,39 @@ async function updateDashboard() {
         const stats = {};
         workTypes.forEach(wt => stats[wt.name] = 0);
 
+        // 如果是棧板，我們也要統計舊的 workType 到對應的顯示名稱
+        const legacyMapping = {
+            'pallet': '木棧板(三隻腳)', // 將舊的 pallet 預設歸類到顯示上，或建立一個統一名稱
+            'combo': '木棧板(三隻腳)',
+            'special': '木棧板(三隻腳)'
+        };
+
         catReports.forEach(r => {
             const known = workTypes.find(wt => wt.id === r.workType);
             if (known) {
                 stats[known.name] = (stats[known.name] || 0) + r.quantity;
+            } else if (cat === '棧板' && legacyMapping[r.workType]) {
+                const mappedName = legacyMapping[r.workType];
+                stats[mappedName] = (stats[mappedName] || 0) + r.quantity;
             }
         });
+
+        // Check if there is any data for this category
+        const totalQty = Object.values(stats).reduce((a, b) => a + b, 0);
+        if (totalQty === 0) return;
 
         // Render Card
         let listHtml = '';
         workTypes.forEach(wt => {
             const val = stats[wt.name] || 0;
-            listHtml += `
-                <div class="stat-row">
-                    <span class="stat-label">${wt.name}</span>
-                    <span class="stat-value">${val}</span>
-                </div>
+            if (val > 0) {
+                listHtml += `
+                    <div class="stat-row">
+                        <span class="stat-label">${wt.name}</span>
+                        <span class="stat-value">${val}</span>
+                    </div>
                 `;
+            }
         });
 
         grid.innerHTML += `
@@ -621,9 +692,9 @@ async function updateDashboard() {
     // Change Title
     const sectionTitle = document.querySelectorAll('.section-title');
     if (sectionTitle.length > 1) {
-        sectionTitle[1].textContent = '同仁績效排行榜';
+        sectionTitle[1].textContent = '今日同仁績效排行榜';
     } else if (sectionTitle.length === 1) {
-        sectionTitle[0].textContent = '同仁績效排行榜';
+        sectionTitle[0].textContent = '今日同仁績效排行榜';
     }
 
     epContainer.innerHTML = '';
@@ -631,11 +702,13 @@ async function updateDashboard() {
     // 1. Calculate Scores
     // Weights
     const weights = {
-        'log': 20, 'scrap': 0.11, 'board': 0.02,
-        'plank': 0.015, 'strip': 0.1, 'chip': 0.2,
+        'log': 20, 'scrap': 0.11, 'board': 0.05, 'shear_strip': 0.05, 'board_strip': 0.05, 'pellet': 0.08,
+        'plank': 0.025, 'strip': 0.05, 'chip': 0.1,
         'groove': 0.04, 'bevel': 0.05,
-        'panel': 0.4, 'slat': 0.4,
-        'pallet': 1, 'cover': 0.5, 'box': 10, 'combo': 0.6
+        'panel': 0.25, 'slat': 0.083,
+        'pallet_3legs': 0.95, 'pallet_pellet': 1.3, 'pallet_glue': 0.9, 'cover': 0.6, 'combo_pallet': 0.7, 'box': 10, 'l_angle': 0.1,
+        // 為避免歷史數據計算錯誤，保留舊的 ID
+        'pallet': 0.95, 'combo': 0.55, 'special': 4
     };
 
     const scores = {}; // { '王小明': 105.5 }
@@ -690,14 +763,11 @@ async function updateDashboard() {
 
 
         // Determine Color Class
-        let colorClass = 'status-green'; // Default (80~110)
+        let colorClass = 'status-green'; // Default (80~100)
         if (s < 80) colorClass = 'status-red';
-        else if (s > 110) colorClass = 'status-yellow';
+        else if (s > 100) colorClass = 'status-yellow';
 
-        // Calculate progress bar width (max 150 for visual scaling, or relative to 100)
-        // Let's cap visual width at 100% for 120 points to avoid overflow? 
-        // Or just typical standard.
-        const pct = Math.min(100, (s / 110) * 100);
+        const pct = Math.min(100, (s / 100) * 100);
 
         gridHtml += `
             <div class="machine-card employee-card">
@@ -821,9 +891,86 @@ async function exportMonthly() { const m = prompt('月份 (YYYY-MM)', new Date()
 
 function exportCSV(rs, fn) {
     if (rs.length === 0) { showToast('沒有資料'); return; }
+
+    // 1. 產生明細資料
     const h = ['時間', '機台', '機台名稱', '工作類型', '數量', '單位', '報工者', '共同作業者', '備註'];
     const rows = rs.map(r => [r.timestamp, r.machine, r.machineName, r.workTypeName, r.quantity, r.unit, r.worker, (r.coworkers || []).join('/'), r.note || '']);
-    const csv = [h, ...rows].map(row => row.map(c => `"${c}"`).join(',')).join('\n');
+    let csv = [h, ...rows].map(row => row.map(c => `"${c}"`).join(',')).join('\n');
+
+    // 2. 附加分數總結 (依每日計算分數與評價，並統計次數)
+    const weights = {
+        'log': 20, 'scrap': 0.11, 'board': 0.05, 'shear_strip': 0.05, 'board_strip': 0.05, 'pellet': 0.08,
+        'plank': 0.025, 'strip': 0.1, 'chip': 0.2,
+        'groove': 0.04, 'bevel': 0.05,
+        'panel': 0.25, 'slat': 0.083,
+        'pallet_3legs': 0.95, 'pallet_pellet': 1.4, 'pallet_glue': 0.9, 'cover': 0.6, 'box': 10, 'l_angle': 0.1,
+        'pallet': 0.95, 'combo': 0.55, 'special': 4
+    };
+
+    const employeeStats = {};
+    const initEmployee = (name) => {
+        if (!employeeStats[name]) {
+            employeeStats[name] = { '低於預期': 0, '正常': 0, '出類拔萃': 0, '總分': 0 };
+        }
+    };
+
+    // 先依日期分組
+    const dailyData = {};
+    rs.forEach(r => {
+        if (!r.timestamp) return;
+        const d = new Date(r.timestamp);
+        if (isNaN(d.getTime())) return;
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const localDateStr = `${year}-${month}-${day}`;
+
+        if (!dailyData[localDateStr]) dailyData[localDateStr] = [];
+        dailyData[localDateStr].push(r);
+    });
+
+    // 依每日計算分數與評價
+    for (const dateStr in dailyData) {
+        const records = dailyData[dateStr];
+        const dailyScores = {};
+
+        const addDailyScore = (name, pts) => {
+            if (!name) return;
+            initEmployee(name);
+            dailyScores[name] = (dailyScores[name] || 0) + pts;
+            employeeStats[name]['總分'] += pts;
+        };
+
+        records.forEach(r => {
+            const w = r.workType;
+            let weight = weights[w] || 0;
+            const points = r.quantity * weight;
+            addDailyScore(r.worker, points);
+            if (r.coworkers && Array.isArray(r.coworkers)) {
+                r.coworkers.forEach(c => addDailyScore(c, points));
+            }
+        });
+
+        for (const [name, score] of Object.entries(dailyScores)) {
+            const s = parseFloat(score.toFixed(1));
+            if (s < 80) employeeStats[name]['低於預期']++;
+            else if (s <= 100) employeeStats[name]['正常']++;
+            else employeeStats[name]['出類拔萃']++;
+        }
+    }
+
+    const statList = Object.entries(employeeStats).map(([name, stats]) => ({ name, ...stats }));
+    statList.sort((a, b) => b['總分'] - a['總分']);
+
+    if (statList.length > 0) {
+        csv += '\n\n"--- 同仁分數與評價總覽 (依每日計算) ---"\n';
+        csv += '"姓名","期間總分","出類拔萃 (天)","正常 (天)","低於預期 (天)"\n';
+        statList.forEach(p => {
+            const totalScore = parseFloat(p['總分'].toFixed(1));
+            csv += `"${p.name}","${totalScore}","${p['出類拔萃']}","${p['正常']}","${p['低於預期']}"\n`;
+        });
+    }
+
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${fn}.csv`; a.click();
     showToast('匯出成功！');

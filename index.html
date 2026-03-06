@@ -124,9 +124,11 @@
                         <label>機台</label>
                         <select id="machine-select">
                             <option value="">選擇機台</option>
-                            <optgroup label="剪台">
+                            <optgroup label="大剪台">
                                 <option value="M101">M101 - 大剪台(上下剪)</option>
                                 <option value="M102">M102 - 大剪台(甩剪)</option>
+                            </optgroup>
+                            <optgroup label="小剪台">
                                 <option value="M103">M103 - 小剪台</option>
                             </optgroup>
                             <optgroup label="多片機">
@@ -301,7 +303,8 @@
             <div class="form-group">
                 <label>分類 (自動對應工作類型)</label>
                 <select id="machine-category">
-                    <option value="剪台">剪台</option>
+                    <option value="大剪台">大剪台</option>
+                    <option value="小剪台">小剪台</option>
                     <option value="多片機">多片機</option>
                     <option value="凹槽機/斜角">凹槽機/斜角</option>
                     <option value="合板機">合板機</option>
